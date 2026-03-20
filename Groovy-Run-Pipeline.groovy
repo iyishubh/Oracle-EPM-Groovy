@@ -1,3 +1,10 @@
+/*RTPS: */
+
+/*  AUTHOR: SHUBHAM PANCHAL
+	PURPOSE: Sequentially trigger and monitor eight separate Data Integration Pipeline jobs
+			 ensuring that one period finishes completely before the next one begins.
+*/
+
 //Step : Process Each Forecast Period
 String LAST_JOB_ID = ""  // Initialize
 
@@ -37,7 +44,7 @@ if (LAST_JOB_ID && LAST_JOB_ID.isNumber()) {
 
     while (jobRunning && checkAttempts < 100) {
         sleep(5000)
-        String activeJobStatus = getJobStatus(connectionNamedm, LAST_JOB_ID)
+        String activeJobStatus = getJobStatus(EPMdm, LAST_JOB_ID)
 
         if (activeJobStatus == "RUNNING") {
             println "Waiting for previous job to finish before starting Forecast Period $i..."
@@ -52,7 +59,7 @@ if (LAST_JOB_ID && LAST_JOB_ID.isNumber()) {
 }
 
         // Submit new pipeline job only if no other job is running
-        HttpResponse<String> jsonResponse = operation.application.getConnection(connectionNamedm)
+        HttpResponse<String> jsonResponse = operation.application.getConnection(EPMdm)
             .post()
             .header("Content-Type", "application/json")
             .body(json([
@@ -90,7 +97,7 @@ if (LAST_JOB_ID && LAST_JOB_ID.isNumber()) {
         println "Stored LAST_JOB_ID: ${LAST_JOB_ID}"
 
         // Ensure job completes before moving to next period
-        boolean isComplete = waitForCompletion(connectionNamedm, LAST_JOB_ID, "Pipeline Job")
+        boolean isComplete = waitForCompletion(EPMdm, LAST_JOB_ID, "Pipeline Job")
 
         if (!isComplete) {
 	    throwVetoException("❌ Pipeline job failed for forecast period ${i}. Stopping execution.")
